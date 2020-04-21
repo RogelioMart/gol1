@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <time.h>
+#include <unistd.h>
 
 int aroundTheBlock(int currR, int currC, int **twoD, int maxR, int maxC)
 {
@@ -47,6 +48,8 @@ int aroundTheBlock(int currR, int currC, int **twoD, int maxR, int maxC)
             numOfNeighbors = numOfNeighbors + 1;
     }
     
+	//printf("on r: %d c: %d neighbors = %d\n\n", currR, currC, numOfNeighbors);//DEBUGGING
+	
     return(numOfNeighbors);
 }
 
@@ -56,26 +59,36 @@ int **aroundTheBoard(int **board, int maxR, int maxC)
     int c = 0;
     int neighbors = 0;
     
-    for(r = 0; r < maxR; r++)
+    for(r = 0; r <= maxR; r++)
     {
      
-        for(c = 0; c < maxC; c++)
+        for(c = 0; c <= maxC; c++)
         {
             neighbors = 0;
             
             neighbors = aroundTheBlock(r, c, board, maxR, maxC);
             
             //RULE SET
-            if((neighbors >= 2) && (neighbors < 4)) //(2 <= x < 4)
+            if(neighbors < 2) //Any live cell with fewer than two live neighbours dies, as if by underpopulation.
             {
-                board[r][c] = 1;
+                board[r][c] = 0;
             }
             else
             {
-                if(neighbors >= 4)
+                if((2 <= neighbors) && (neighbors <= 3)) // Any live cell with two or three live neighbours lives on to the next generation.
                 {
-                    board[r][c] = 0;
+                   if((board[r][c] == 0) && (neighbors == 3)) //Any dead cell with three live neighbors becomes a live cell.
+				   {
+					   board[r][c] = 1;
+				   }
                 }
+				else
+				{
+					if(neighbors >= 4)//Any live cell with more than three live neighbours dies, as if by overpopulation.
+					{
+					   board[r][c] = 0;
+					}
+				}
             }//ends if statement rule set
             
         }//end for loop of column
@@ -98,7 +111,14 @@ int printBoard(int ** board, int maxR, int maxC)
         for(c = 0; c <= maxC; c++)
         {
 			
-			printf("%d ", board[r][c]);
+			if(board[r][c] == 0)
+			{
+				printf("_");
+			}
+			else
+			{
+				printf("%d", board[r][c]);
+			}
 			
         }//end for loop of column
         
@@ -111,31 +131,73 @@ int printBoard(int ** board, int maxR, int maxC)
 	return(0);
 }
 
-int main()
+int **initArray(int **board, int maxR, int maxC)
 {
 	int i = 0;
 	int j = 0;
 	        //[row] [column]// 2,4 2,5 3,4
-	int **checker = (int**)malloc(8 * sizeof(int*));
-	for(i = 0; i < 8; i++)
+	board = (int**)malloc(maxR * sizeof(int*));
+	for(i = 0; i < maxR; i++)
 	{
-		checker[i] = (int*)malloc (8 * sizeof(int));
+		board[i] = (int*)malloc (maxC* sizeof(int));
 	}
-	
-	for(i = 0; i < 8; i++)
+
+	for(i = 0; i < maxR; i++)
 	{
-		for(j = 0; j < 8; j++)
+		for(j = 0; j < maxC; j++)
 		{
-			checker[i][j] = 0;
+			board[i][j] = 0;
 		}
 	}
+
+	return(board);
+}
+
+
+int **assign1s(int **board, int maxR, int maxC)
+{
 	
-	checker[2][4] = 1;
-	checker[2][5] = 1;
-	checker[3][4] = 1;
+	time_t t;
+	srand(time(&t));
+	
+	int decide;
+	
+	int r = 0;
+	int c = 0;
+	
+	for(r = 0; r <= maxR; r++)
+	{
+		for(c = 0; c <= maxC; c++)
+		{
+			//decide = (rand() % (max - min + 1) ) + min;
+			decide = (rand() % (100 - 0 + 1) ) + 0;
+			
+			if( decide % 10 == 0  )
+			{
+				board[r][c] = 1;
+			}
+			
+		}//loop for column
+		
+	}//loop for row
+	
+	return(board);
+	
+}
+
+int main()
+{
+
+	
+
+	int **checker;	
+											//row, columns
+	checker = initArray(checker, 30, 30);
+	
+	checker = assign1s(checker, 29, 29);
 	
 	printf("Gen 0\n");
-	printBoard(checker, 7, 7);
+	printBoard(checker, 29, 29); //board must always be 1 smaller for rows and columns
 	
 	int loopy = 1;
     do
@@ -144,13 +206,15 @@ int main()
 		printf("Gen %d\n", loopy);
 		
 		//aroundTheBoard(int **board, int maxR, int maxC)
-		checker = aroundTheBoard(checker, 7, 7);
+		checker = aroundTheBoard(checker, 29, 29);
 		
-		printBoard(checker, 7, 7);
+		printBoard(checker, 29, 29);
 		
-		loopy = loopy + 1;
+		//loopy = loopy + 1;
 		
-	}while(loopy < 1);
+		sleep(1);
+		
+	}while(loopy < 11);
 
 	
     return 0;
